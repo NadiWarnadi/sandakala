@@ -1,0 +1,25 @@
+model:
+  type: "ollama"          # atau "api"
+  name: "deepseek-coder:6.7b"
+  api_url: null
+  api_key: null
+
+# model:
+#   type: "api"
+#   name: "deepseek-v6"
+#   api_url: "https://api.deepseek.com/v1/chat/completions"
+#   api_key: "your-key"
+
+paths:
+  domains: "domains"
+  cache: "cache"
+  logs: "logs"
+  summaries: "summaries"
+
+retrieval:
+  use_embeddings: false   # nanti bisa diaktifkan
+
+internet:
+  enabled: true
+  default_timeout: 10
+  cache_ttl: 86400        # 1 hari dalam detik

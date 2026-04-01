@@ -1,0 +1,8 @@
+{
+  "error_type": "ValidationException",
+  "context": "form registrasi tanpa validasi email",
+  "bad_code": "$request->validate(['name' => 'required']);",
+  "fixed_code": "$request->validate(['name' => 'required', 'email' => 'required|email']);",
+  "lesson": "Selalu sertakan semua field yang perlu divalidasi.",
+  "tags": ["validation", "laravel"]
+}
