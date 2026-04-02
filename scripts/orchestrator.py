@@ -34,18 +34,49 @@ LOGS_DIR.mkdir(exist_ok=True)
 SUMMARIES_DIR.mkdir(exist_ok=True)
 CACHE_DIR.mkdir(exist_ok=True)
 
+def get_clean_tech_name(query, aliases):
+    """Minta AI menentukan nama teknologi tunggal dari query untuk folder."""
+    prompt = f"""Tentukan SATU nama teknologi/bahasa pemrograman utama dari pertanyaan ini: "{query}".
+    Jika ada di daftar alias ini: {list(aliases.keys())}, gunakan nilai petanya.
+    Hanya jawab dengan 1 kata (lowercase), contoh: laravel, python, verilog.
+    Jika tidak ada teknologi spesifik, jawab 'general'."""
+    
+    # Panggil fungsi ask_ollama atau ask_api yang sudah ada di orchestrator
+    tech = ask_ollama(prompt).strip().lower().replace(".", "")
+    return aliases.get(tech, tech)
+
 def detect_domain(query):
-    """Simple keyword-based domain detection."""
-    q = query.lower()
-    if "laravel" in q:
-        return "web/backend/laravel"
-    if "verilog" in q:
-        return "embedded/verilog"
-    if "javascript" in q or "js" in q:
-        return "web/frontend/javascript"
-    if "python" in q:
-        return "general/python"
-    return "general"
+    # 1. Load Alias
+    alias_path = DOMAIN_BASE / "alias.json"
+    aliases = json.loads(alias_path.read_text()) if alias_path.exists() else {}
+
+    # 2. Tanya AI: "Ini teknologi apa?" 
+    # (Ini mencegah duplikasi karena AI tahu JS = Javascript)
+    tech_name = get_clean_tech_name(query, aliases)
+    
+    if tech_name == "general":
+        return "general"
+
+    # 3. Cari apakah folder tech_name sudah ada di sub-mana pun
+    # Contoh: cari 'laravel' di seluruh subfolder domains/
+    existing_paths = list(DOMAIN_BASE.glob(f"**/{tech_name}"))
+    
+    if existing_paths:
+        # Jika ketemu, gunakan path yang sudah ada (misal: web/backend/laravel)
+        return str(existing_paths[0].relative_to(DOMAIN_BASE))
+    
+    # 4. Jika BARU, minta AI tentukan kategori foldernya
+    cat_prompt = f"Apa kategori parent untuk teknologi '{tech_name}'? Contoh: web/backend, mobile/android, hardware/embedded. Jawab hanya path kategorinya saja."
+    category = ask_ollama(cat_prompt).strip().lower().replace(" ", "")
+    
+    new_domain_path = DOMAIN_BASE / category / tech_name
+    
+    # Buat foldernya
+    (new_domain_path / "knowledge").mkdir(parents=True, exist_ok=True)
+    (new_domain_path / "errors").mkdir(parents=True, exist_ok=True)
+    
+    print(f"📁 Domain baru diciptakan otomatis: {new_domain_path}")
+    return str(new_domain_path.relative_to(DOMAIN_BASE))
 
 def load_knowledge(domain):
     """Load all .md files from domain/knowledge/."""

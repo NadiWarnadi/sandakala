@@ -1,0 +1,7 @@
+{
+  "js": "javascript",
+  "py": "python",
+  "ts": "typescript",
+  "golang": "go",
+  "laravel": "laravel"
+}
